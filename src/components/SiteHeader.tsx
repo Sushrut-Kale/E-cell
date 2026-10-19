@@ -29,11 +29,6 @@ export const SiteHeader: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile drawer when path changes
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
-
   return (
     <header
       className={`sticky top-0 z-50 w-full transition-all duration-200 ${
@@ -111,6 +106,7 @@ export const SiteHeader: React.FC = () => {
                 <Link
                   key={link.name}
                   href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
                   className={`px-3 py-2.5 rounded-lg text-base font-medium transition-colors ${
                     isActive
                       ? 'bg-ecell-beige text-ecell-blue font-bold'
@@ -126,6 +122,7 @@ export const SiteHeader: React.FC = () => {
           <div className="pt-4 border-t border-ecell-border flex flex-col gap-2.5">
             <Link
               href="/join"
+              onClick={() => setMobileMenuOpen(false)}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-ecell-blue text-white font-semibold shadow-xs"
             >
               <span>Join E-Cell MITAOE</span>
@@ -133,6 +130,7 @@ export const SiteHeader: React.FC = () => {
             </Link>
             <Link
               href="/admin"
+              onClick={() => setMobileMenuOpen(false)}
               className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs text-ecell-muted hover:text-ecell-navy border border-ecell-border"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-ecell-blue" />

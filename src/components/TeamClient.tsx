@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { TeamMember, AcademicYear, TeamDepartment } from '@/types';
 import { TeamMemberCard } from '@/components/TeamMemberCard';
-import { Users, Calendar, Shield, Info } from 'lucide-react';
+import { Calendar, Info } from 'lucide-react';
 
 interface TeamClientProps {
   initialMembers: TeamMember[];

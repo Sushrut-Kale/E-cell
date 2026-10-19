@@ -21,8 +21,7 @@ import {
   Users, 
   ArrowRight, 
   ArrowUpRight, 
-  Sparkles, 
-  Calendar 
+  Sparkles 
 } from 'lucide-react';
 
 export default async function HomePage() {

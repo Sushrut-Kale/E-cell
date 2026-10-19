@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
-import { GalleryAlbum, GalleryImage, AcademicYear, EventCategory } from '@/types';
+import { GalleryAlbum, GalleryImage } from '@/types';
 import { GalleryLightbox } from '@/components/GalleryLightbox';
 import { Filter, Calendar, FolderArchive, Sparkles, ZoomIn } from 'lucide-react';
 

@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { EventItem, EventCategory, AcademicYear } from '@/types';
 import { EventCard } from '@/components/EventCard';
-import { Search, Filter, X, Calendar, Sparkles } from 'lucide-react';
+import { Search, Filter, X, Calendar } from 'lucide-react';
 
 interface EventsListingClientProps {
   initialEvents: EventItem[];

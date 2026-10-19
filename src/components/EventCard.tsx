@@ -6,10 +6,9 @@ import { Calendar, MapPin, ArrowRight, Users, Sparkles } from 'lucide-react';
 
 interface EventCardProps {
   event: EventItem;
-  featuredVariant?: boolean;
 }
 
-export const EventCard: React.FC<EventCardProps> = ({ event, featuredVariant = false }) => {
+export const EventCard: React.FC<EventCardProps> = ({ event }) => {
   const isUpcoming = event.status === 'upcoming';
 
   return (

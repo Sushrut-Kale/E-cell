@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Sparkles, Calendar, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Calendar, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 export const HeroSection: React.FC = () => {
   return (

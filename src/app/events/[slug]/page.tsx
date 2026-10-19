@@ -13,8 +13,7 @@ import {
   ArrowUpRight, 
   CheckCircle2, 
   Sparkles, 
-  Award, 
-  Share2 
+  Award 
 } from 'lucide-react';
 
 interface EventPageProps {
