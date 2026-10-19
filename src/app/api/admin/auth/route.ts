@@ -1,21 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { 
-  checkRateLimit, 
-  resetRateLimit, 
+  checkRateLimitAsync, 
+  resetRateLimitAsync, 
   generateAdminSessionToken, 
+  verifyCsrfOrigin,
   SESSION_COOKIE_NAME, 
   SESSION_MAX_AGE_SECONDS 
 } from '@/lib/server-auth';
 
 export async function POST(request: NextRequest) {
   try {
+    // CSRF verification for state-changing authentication request
+    if (!verifyCsrfOrigin(request)) {
+      return NextResponse.json(
+        { success: false, message: 'Cross-origin request rejected' },
+        { status: 403 }
+      );
+    }
+
     // Determine client identifier for rate-limiting
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
                request.headers.get('x-real-ip') || 
                'anonymous-client';
 
-    const rateLimit = checkRateLimit(`auth:${ip}`, 5, 15 * 60 * 1000);
+    const rateLimit = await checkRateLimitAsync(`auth:${ip}`, 5, 15 * 60 * 1000);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { 
@@ -59,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Reset rate limiter upon successful authentication
-    resetRateLimit(`auth:${ip}`);
+    await resetRateLimitAsync(`auth:${ip}`);
 
     // Generate cryptographic timestamped token
     const token = generateAdminSessionToken();

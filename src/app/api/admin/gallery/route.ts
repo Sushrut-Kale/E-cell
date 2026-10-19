@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminSession } from '@/lib/server-auth';
+import { verifyAdminSession, verifyCsrfOrigin } from '@/lib/server-auth';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { SEED_GALLERY_ALBUMS } from '@/data/seed';
 import { GalleryAlbum } from '@/types';
+import { mapDbAlbumToAlbum } from '@/lib/mappers';
 
 let runtimeAlbums: GalleryAlbum[] = [...SEED_GALLERY_ALBUMS];
 
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
     try {
       const { data, error } = await supabase.from('gallery_albums').select('*, gallery_images(*)');
       if (!error && data) {
-        return NextResponse.json({ success: true, albums: data });
+        return NextResponse.json({ success: true, albums: data.map(mapDbAlbumToAlbum) });
       }
     } catch {}
   }
@@ -26,6 +27,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   if (!verifyAdminSession(request)) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (!verifyCsrfOrigin(request)) {
+    return NextResponse.json({ success: false, message: 'Cross-origin request rejected' }, { status: 403 });
   }
 
   try {
@@ -71,7 +76,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, message: `Database error: ${error.message}` }, { status: 500 });
       }
 
-      return NextResponse.json({ success: true, album: data, message: 'Album recorded in database' });
+      return NextResponse.json({
+        success: true,
+        album: mapDbAlbumToAlbum(data),
+        message: 'Album recorded in database'
+      });
     }
 
     runtimeAlbums = [newAlbum, ...runtimeAlbums];
@@ -88,6 +97,10 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   if (!verifyAdminSession(request)) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (!verifyCsrfOrigin(request)) {
+    return NextResponse.json({ success: false, message: 'Cross-origin request rejected' }, { status: 403 });
   }
 
   try {

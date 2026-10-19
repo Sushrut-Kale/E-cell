@@ -166,3 +166,18 @@ FOR INSERT TO authenticated WITH CHECK (bucket_id = 'ecell-media');
 
 CREATE POLICY "Admin Media Delete" ON storage.objects
 FOR DELETE TO authenticated USING (bucket_id = 'ecell-media');
+
+-- =========================================================================
+-- 9. Shared Rate Limiting Table (For multi-instance / serverless production)
+-- =========================================================================
+
+CREATE TABLE IF NOT EXISTS public.admin_rate_limits (
+  identifier TEXT PRIMARY KEY,
+  attempts INTEGER DEFAULT 1,
+  reset_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RLS: Enable security, restrict direct public write, allow authenticated and service-role access
+ALTER TABLE public.admin_rate_limits ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins have access to rate limits" ON public.admin_rate_limits FOR ALL TO authenticated USING (true);

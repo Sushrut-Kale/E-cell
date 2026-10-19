@@ -17,6 +17,12 @@ import {
   SEED_HOMEPAGE_STATS 
 } from '@/data/seed';
 import { supabase, isSupabaseConfigured } from './supabase';
+import { 
+  mapDbEventToEvent, 
+  mapDbAchievementToAchievement, 
+  mapDbAlbumToAlbum, 
+  mapDbTeamMemberToMember 
+} from './mappers';
 
 export async function getHomepageStats(): Promise<HomepageStats> {
   return SEED_HOMEPAGE_STATS;
@@ -42,7 +48,7 @@ export async function getEvents(filters?: {
       }
       const { data, error } = await query;
       if (!error && data && data.length > 0) {
-        return data as EventItem[];
+        return data.map(mapDbEventToEvent);
       }
     } catch {
       // Fallback to seed data
@@ -81,7 +87,7 @@ export async function getEventBySlug(slug: string): Promise<EventItem | null> {
         .select('*')
         .eq('slug', slug)
         .single();
-      if (!error && data) return data as EventItem;
+      if (!error && data) return mapDbEventToEvent(data);
     } catch {
       // Fallback
     }
@@ -110,7 +116,7 @@ export async function getAchievements(filters?: {
       }
       const { data, error } = await query;
       if (!error && data && data.length > 0) {
-        return data as AchievementItem[];
+        return data.map(mapDbAchievementToAchievement);
       }
     } catch {
       // Fallback
@@ -131,6 +137,24 @@ export async function getGalleryAlbums(filters?: {
   academicYear?: AcademicYear | 'all';
   category?: EventCategory | 'all';
 }): Promise<GalleryAlbum[]> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      let query = supabase.from('gallery_albums').select('*, gallery_images(*)');
+      if (filters?.academicYear && filters.academicYear !== 'all') {
+        query = query.eq('academic_year', filters.academicYear);
+      }
+      if (filters?.category && filters.category !== 'all') {
+        query = query.eq('category', filters.category);
+      }
+      const { data, error } = await query;
+      if (!error && data && data.length > 0) {
+        return data.map(mapDbAlbumToAlbum);
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
   let albums = [...SEED_GALLERY_ALBUMS];
   if (filters?.academicYear && filters.academicYear !== 'all') {
     albums = albums.filter(a => a.academicYear === filters.academicYear);
@@ -145,6 +169,24 @@ export async function getTeamMembers(filters?: {
   academicYear?: AcademicYear | 'all';
   department?: string;
 }): Promise<TeamMember[]> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      let query = supabase.from('team_members').select('*').order('sort_order', { ascending: true });
+      if (filters?.academicYear && filters.academicYear !== 'all') {
+        query = query.eq('academic_year', filters.academicYear);
+      }
+      if (filters?.department && filters.department !== 'all') {
+        query = query.eq('department', filters.department);
+      }
+      const { data, error } = await query;
+      if (!error && data && data.length > 0) {
+        return data.map(mapDbTeamMemberToMember).sort((a, b) => a.order - b.order);
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
   let members = [...SEED_TEAM_MEMBERS];
   if (filters?.academicYear && filters.academicYear !== 'all') {
     members = members.filter(m => m.academicYear === filters.academicYear);

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminSession } from '@/lib/server-auth';
+import { verifyAdminSession, verifyCsrfOrigin } from '@/lib/server-auth';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { SEED_EVENTS } from '@/data/seed';
 import { EventItem } from '@/types';
+import { mapDbEventToEvent } from '@/lib/mappers';
 
 // In-memory runtime store for preview mode session updates
 let runtimeEvents: EventItem[] = [...SEED_EVENTS];
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
     try {
       const { data, error } = await supabase.from('events').select('*').order('date', { ascending: false });
       if (!error && data) {
-        return NextResponse.json({ success: true, events: data, source: 'supabase' });
+        return NextResponse.json({ success: true, events: data.map(mapDbEventToEvent), source: 'supabase' });
       }
     } catch {
       // Fallback
@@ -29,6 +30,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   if (!verifyAdminSession(request)) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (!verifyCsrfOrigin(request)) {
+    return NextResponse.json({ success: false, message: 'Cross-origin request rejected' }, { status: 403 });
   }
 
   try {
@@ -90,7 +95,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, message: `Database error: ${error.message}` }, { status: 500 });
       }
 
-      return NextResponse.json({ success: true, event: data, message: 'Event successfully created in database' });
+      return NextResponse.json({ success: true, event: mapDbEventToEvent(data), message: 'Event successfully created in database' });
     }
 
     // Local runtime store for preview demonstration
@@ -108,6 +113,10 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   if (!verifyAdminSession(request)) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (!verifyCsrfOrigin(request)) {
+    return NextResponse.json({ success: false, message: 'Cross-origin request rejected' }, { status: 403 });
   }
 
   try {

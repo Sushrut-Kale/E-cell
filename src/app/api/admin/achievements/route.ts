@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminSession } from '@/lib/server-auth';
+import { verifyAdminSession, verifyCsrfOrigin } from '@/lib/server-auth';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { SEED_ACHIEVEMENTS } from '@/data/seed';
 import { AchievementItem } from '@/types';
+import { mapDbAchievementToAchievement } from '@/lib/mappers';
 
 let runtimeAchievements: AchievementItem[] = [...SEED_ACHIEVEMENTS];
 
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
     try {
       const { data, error } = await supabase.from('achievements').select('*').order('year', { ascending: false });
       if (!error && data) {
-        return NextResponse.json({ success: true, achievements: data });
+        return NextResponse.json({ success: true, achievements: data.map(mapDbAchievementToAchievement) });
       }
     } catch {}
   }
@@ -26,6 +27,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   if (!verifyAdminSession(request)) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (!verifyCsrfOrigin(request)) {
+    return NextResponse.json({ success: false, message: 'Cross-origin request rejected' }, { status: 403 });
   }
 
   try {
@@ -66,7 +71,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, message: `Database error: ${error.message}` }, { status: 500 });
       }
 
-      return NextResponse.json({ success: true, achievement: data, message: 'Achievement recorded in database' });
+      return NextResponse.json({
+        success: true,
+        achievement: mapDbAchievementToAchievement(data),
+        message: 'Achievement recorded in database'
+      });
     }
 
     runtimeAchievements = [newAchievement, ...runtimeAchievements];
@@ -83,6 +92,10 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   if (!verifyAdminSession(request)) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (!verifyCsrfOrigin(request)) {
+    return NextResponse.json({ success: false, message: 'Cross-origin request rejected' }, { status: 403 });
   }
 
   try {

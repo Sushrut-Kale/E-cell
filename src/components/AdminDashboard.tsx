@@ -47,13 +47,13 @@ export const AdminDashboard: React.FC = () => {
   const [achievements, setAchievements] = useState<AchievementItem[]>(SEED_ACHIEVEMENTS);
   const [albums, setAlbums] = useState<GalleryAlbum[]>(SEED_GALLERY_ALBUMS);
   const [team, setTeam] = useState<TeamMember[]>(SEED_TEAM_MEMBERS);
-  const [enquiries] = useState<ContactEnquiry[]>(() => {
+  const [enquiries, setEnquiries] = useState<ContactEnquiry[]>(() => {
     if (typeof window !== 'undefined') {
       try { return JSON.parse(localStorage.getItem('ecell_demo_enquiries') || '[]'); } catch { return []; }
     }
     return [];
   });
-  const [applications] = useState<JoinApplication[]>(() => {
+  const [applications, setApplications] = useState<JoinApplication[]>(() => {
     if (typeof window !== 'undefined') {
       try { return JSON.parse(localStorage.getItem('ecell_demo_applications') || '[]'); } catch { return []; }
     }
@@ -116,16 +116,20 @@ export const AdminDashboard: React.FC = () => {
 
   const loadData = useCallback(async () => {
     try {
-      const [evRes, achRes, galRes, tmRes] = await Promise.all([
+      const [evRes, achRes, galRes, tmRes, enqRes, appRes] = await Promise.all([
         fetch('/api/admin/events').then(r => r.json()).catch(() => null),
         fetch('/api/admin/achievements').then(r => r.json()).catch(() => null),
         fetch('/api/admin/gallery').then(r => r.json()).catch(() => null),
         fetch('/api/admin/team').then(r => r.json()).catch(() => null),
+        fetch('/api/admin/enquiries').then(r => r.json()).catch(() => null),
+        fetch('/api/admin/applications').then(r => r.json()).catch(() => null),
       ]);
       if (evRes?.events) setEvents(evRes.events);
       if (achRes?.achievements) setAchievements(achRes.achievements);
       if (galRes?.albums) setAlbums(galRes.albums);
       if (tmRes?.team) setTeam(tmRes.team);
+      if (enqRes?.enquiries && enqRes.enquiries.length > 0) setEnquiries(enqRes.enquiries);
+      if (appRes?.applications && appRes.applications.length > 0) setApplications(appRes.applications);
     } catch {
       // Fallback
     }
@@ -355,6 +359,38 @@ export const AdminDashboard: React.FC = () => {
       }
     } catch {
       setNotification({ type: 'error', message: 'Network error deleting album' });
+    }
+  };
+
+  const handleDeleteEnquiry = async (id: string) => {
+    if (!confirm('Remove this enquiry record?')) return;
+    try {
+      const res = await fetch(`/api/admin/enquiries?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setEnquiries(prev => prev.filter(e => e.id !== id));
+        setNotification({ type: 'success', message: data.message || 'Enquiry removed' });
+      } else {
+        setNotification({ type: 'error', message: data.message || 'Delete failed' });
+      }
+    } catch {
+      setNotification({ type: 'error', message: 'Network error deleting enquiry' });
+    }
+  };
+
+  const handleDeleteApplication = async (id: string) => {
+    if (!confirm('Remove this application record?')) return;
+    try {
+      const res = await fetch(`/api/admin/applications?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setApplications(prev => prev.filter(a => a.id !== id));
+        setNotification({ type: 'success', message: data.message || 'Application removed' });
+      } else {
+        setNotification({ type: 'error', message: data.message || 'Delete failed' });
+      }
+    } catch {
+      setNotification({ type: 'error', message: 'Network error deleting application' });
     }
   };
 
@@ -806,9 +842,18 @@ export const AdminDashboard: React.FC = () => {
                   <div key={app.id} className="p-4 sm:p-5 space-y-2 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-sm text-ecell-navy">{app.fullName} ({app.email})</span>
-                      <span className="font-mono text-[11px] bg-ecell-blue/10 text-ecell-blue px-2 py-0.5 rounded">
-                        PRN: {app.prn}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[11px] bg-ecell-blue/10 text-ecell-blue px-2 py-0.5 rounded">
+                          PRN: {app.prn}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteApplication(app.id)}
+                          title="Remove application"
+                          className="p-1 rounded text-ecell-muted hover:text-rose-600 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                     <div className="text-ecell-muted">
                       {app.branch} • {app.yearOfStudy} • Primary: <strong className="text-ecell-navy">{app.primaryDomain}</strong>
@@ -834,9 +879,18 @@ export const AdminDashboard: React.FC = () => {
                   <div key={enq.id} className="p-4 sm:p-5 space-y-2 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-sm text-ecell-navy">{enq.fullName} ({enq.email})</span>
-                      <span className="font-bold uppercase text-[10px] bg-ecell-beige text-ecell-navy px-2 py-0.5 rounded">
-                        {enq.category}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold uppercase text-[10px] bg-ecell-beige text-ecell-navy px-2 py-0.5 rounded">
+                          {enq.category}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteEnquiry(enq.id)}
+                          title="Remove enquiry"
+                          className="p-1 rounded text-ecell-muted hover:text-rose-600 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                     <h5 className="font-bold text-ecell-navy">{enq.subject}</h5>
                     <p className="text-ecell-muted">{enq.message}</p>

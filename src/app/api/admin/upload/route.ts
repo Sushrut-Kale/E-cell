@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminSession } from '@/lib/server-auth';
+import { verifyAdminSession, verifyCsrfOrigin } from '@/lib/server-auth';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
@@ -14,6 +14,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { success: false, message: 'Unauthorized: Administrative session required' },
       { status: 401 }
+    );
+  }
+
+  // 2. CSRF Origin Verification
+  if (!verifyCsrfOrigin(request)) {
+    return NextResponse.json(
+      { success: false, message: 'Cross-origin request rejected' },
+      { status: 403 }
     );
   }
 
