@@ -58,7 +58,7 @@ export default async function HomePage() {
             <div className="lg:col-span-5 space-y-4">
               <div className="relative rounded-2xl overflow-hidden border border-ecell-border bg-ecell-beige/30 aspect-4/3 shadow-sm">
                 <Image
-                  src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=900&q=80"
+                  src="/images/about-innovation-hub.jpg"
                   alt="Students collaborating during an E-Cell workshop at MITAOE"
                   fill
                   sizes="(max-width: 1024px) 100vw, 450px"

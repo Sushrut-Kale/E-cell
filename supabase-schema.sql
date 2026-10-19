@@ -146,3 +146,23 @@ CREATE POLICY "Admins have full access to gallery_images" ON public.gallery_imag
 CREATE POLICY "Admins have full access to team" ON public.team_members FOR ALL TO authenticated USING (true);
 CREATE POLICY "Admins have full access to enquiries" ON public.contact_enquiries FOR ALL TO authenticated USING (true);
 CREATE POLICY "Admins have full access to applications" ON public.join_applications FOR ALL TO authenticated USING (true);
+
+-- =========================================================================
+-- 8. Storage Buckets & Policies for Club Media
+-- =========================================================================
+
+-- Insert public bucket for club media if not exists
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('ecell-media', 'ecell-media', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Public read access for images stored in ecell-media
+CREATE POLICY "Public Media Read" ON storage.objects
+FOR SELECT USING (bucket_id = 'ecell-media');
+
+-- Authenticated upload/modify/delete access for admins
+CREATE POLICY "Admin Media Upload" ON storage.objects
+FOR INSERT TO authenticated WITH CHECK (bucket_id = 'ecell-media');
+
+CREATE POLICY "Admin Media Delete" ON storage.objects
+FOR DELETE TO authenticated USING (bucket_id = 'ecell-media');

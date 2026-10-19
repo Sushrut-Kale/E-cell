@@ -80,7 +80,7 @@ export const HeroSection: React.FC = () => {
               {/* Primary Main Visual Card */}
               <div className="relative aspect-4/3 rounded-2xl overflow-hidden border border-ecell-border shadow-lg bg-ecell-navy/5">
                 <Image
-                  src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1000&q=80"
+                  src="/images/hero-conclave.jpg"
                   alt="E-Cell MITAOE Flagship Conclave Gathering"
                   fill
                   priority
