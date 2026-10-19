@@ -26,15 +26,21 @@ import {
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('ecell_admin_auth') === 'true';
-    }
-    return false;
-  });
-
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcode, setPasscode] = useState('');
   const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/admin/check')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated) {
+          setIsAuthenticated(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const [activeTab, setActiveTab] = useState<'overview' | 'events' | 'achievements' | 'gallery' | 'team' | 'applications'>('overview');
 
@@ -81,24 +87,36 @@ export const AdminDashboard: React.FC = () => {
     coverImage: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
   });
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passcode === 'ecell-mitaoe-admin-2025' || passcode === 'admin') {
-      setIsAuthenticated(true);
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('ecell_admin_auth', 'true');
+    setAuthLoading(true);
+    setAuthError('');
+    try {
+      const res = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passcode }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setIsAuthenticated(true);
+      } else {
+        setAuthError(data.message || 'Invalid administrator credentials');
       }
-      setAuthError('');
-    } else {
-      setAuthError('Invalid committee passcode. (Hint: Use default key "ecell-mitaoe-admin-2025" or check .env.example)');
+    } catch {
+      setAuthError('Connection error during server authentication');
+    } finally {
+      setAuthLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('ecell_admin_auth');
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+    } catch {
+      // Ignore
     }
+    setIsAuthenticated(false);
   };
 
   const handleCreateEvent = (e: React.FormEvent) => {
@@ -161,14 +179,15 @@ export const AdminDashboard: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full py-3 rounded-xl bg-ecell-blue text-white font-bold text-sm shadow-xs hover:bg-ecell-blue-hover transition-colors"
+            disabled={authLoading}
+            className="w-full py-3 rounded-xl bg-ecell-blue text-white font-bold text-sm shadow-xs hover:bg-ecell-blue-hover transition-colors disabled:opacity-50"
           >
-            Authenticate & Proceed
+            {authLoading ? 'Verifying Credentials...' : 'Authenticate & Proceed'}
           </button>
         </form>
 
         <div className="mt-6 pt-4 border-t border-ecell-border text-center text-[11px] text-ecell-muted">
-          Development Default: <code className="font-mono bg-ecell-beige px-1.5 py-0.5 rounded text-ecell-navy">ecell-mitaoe-admin-2025</code>
+          Access is verified server-side against protected environment configurations.
         </div>
       </div>
     );

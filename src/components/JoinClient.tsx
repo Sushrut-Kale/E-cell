@@ -64,7 +64,7 @@ export const JoinClient: React.FC = () => {
   });
 
   const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState<{ success: boolean; message: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ success: boolean; message: string; isConfigured?: boolean } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -248,13 +248,27 @@ export const JoinClient: React.FC = () => {
             className={`p-4 rounded-xl mb-6 text-sm flex items-start gap-3 ${
               feedback.success
                 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                : feedback.isConfigured === false
+                ? 'bg-amber-50 text-amber-900 border border-amber-200'
                 : 'bg-rose-50 text-rose-800 border border-rose-200'
             }`}
           >
-            <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+            <CheckCircle2 className={`w-5 h-5 shrink-0 mt-0.5 ${
+              feedback.success 
+                ? 'text-emerald-600' 
+                : feedback.isConfigured === false 
+                ? 'text-amber-600' 
+                : 'text-rose-600'
+            }`} />
             <div>
-              <p className="font-bold">{feedback.success ? 'Application Logged' : 'Submission Error'}</p>
-              <p className="mt-0.5">{feedback.message}</p>
+              <p className="font-bold">
+                {feedback.success 
+                  ? 'Application Received' 
+                  : feedback.isConfigured === false 
+                  ? 'Recruitment Backend Standby' 
+                  : 'Application Error'}
+              </p>
+              <p className="mt-0.5 leading-relaxed">{feedback.message}</p>
             </div>
           </div>
         )}

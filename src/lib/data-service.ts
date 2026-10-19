@@ -155,7 +155,7 @@ export async function getTeamMembers(filters?: {
   return members.sort((a, b) => a.order - b.order);
 }
 
-export async function submitContactEnquiry(data: Omit<ContactEnquiry, 'id' | 'createdAt' | 'status'>): Promise<{ success: boolean; message: string }> {
+export async function submitContactEnquiry(data: Omit<ContactEnquiry, 'id' | 'createdAt' | 'status'>): Promise<{ success: boolean; message: string; isConfigured: boolean }> {
   if (isSupabaseConfigured && supabase) {
     try {
       const { error } = await supabase.from('contact_enquiries').insert([
@@ -168,39 +168,24 @@ export async function submitContactEnquiry(data: Omit<ContactEnquiry, 'id' | 'cr
         }
       ]);
       if (error) {
-        return { success: false, message: error.message };
+        return { success: false, isConfigured: true, message: `Submission failed: ${error.message}` };
       }
-      return { success: true, message: 'Your enquiry has been successfully transmitted to the E-Cell MITAOE coordination team.' };
+      return { success: true, isConfigured: true, message: 'Your enquiry has been successfully transmitted to the E-Cell MITAOE coordination team.' };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Database submission failed';
-      return { success: false, message: msg };
+      return { success: false, isConfigured: true, message: msg };
     }
   }
 
-  // Fallback demo/preview mode:
-  // We clearly communicate that this was stored in local demonstration session
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = JSON.parse(localStorage.getItem('ecell_demo_enquiries') || '[]');
-      stored.push({
-        id: 'enq-' + Date.now(),
-        ...data,
-        createdAt: new Date().toISOString(),
-        status: 'new'
-      });
-      localStorage.setItem('ecell_demo_enquiries', JSON.stringify(stored));
-    } catch {
-      // Ignore storage errors
-    }
-  }
-
+  // When no backend is configured, do NOT falsely report success
   return {
-    success: true,
-    message: 'Enquiry received in preview demonstration mode. Once production database is connected, this dispatches directly to the student relations desk.'
+    success: false,
+    isConfigured: false,
+    message: 'Backend database is not currently connected (Supabase API keys are not configured in .env.local). Message delivery is disabled. Please contact the team directly at ecell@mitaoe.ac.in.'
   };
 }
 
-export async function submitJoinApplication(data: Omit<JoinApplication, 'id' | 'createdAt' | 'status'>): Promise<{ success: boolean; message: string }> {
+export async function submitJoinApplication(data: Omit<JoinApplication, 'id' | 'createdAt' | 'status'>): Promise<{ success: boolean; message: string; isConfigured: boolean }> {
   if (isSupabaseConfigured && supabase) {
     try {
       const { error } = await supabase.from('join_applications').insert([
@@ -218,33 +203,19 @@ export async function submitJoinApplication(data: Omit<JoinApplication, 'id' | '
         }
       ]);
       if (error) {
-        return { success: false, message: error.message };
+        return { success: false, isConfigured: true, message: `Application submission failed: ${error.message}` };
       }
-      return { success: true, message: 'Application submitted successfully! Check your email for next round updates.' };
+      return { success: true, isConfigured: true, message: 'Application submitted successfully to E-Cell MITAOE secretariat!' };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Application submission failed';
-      return { success: false, message: msg };
+      return { success: false, isConfigured: true, message: msg };
     }
   }
 
-  // Demo fallback
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = JSON.parse(localStorage.getItem('ecell_demo_applications') || '[]');
-      stored.push({
-        id: 'app-' + Date.now(),
-        ...data,
-        createdAt: new Date().toISOString(),
-        status: 'pending'
-      });
-      localStorage.setItem('ecell_demo_applications', JSON.stringify(stored));
-    } catch {
-      // Ignore
-    }
-  }
-
+  // When no backend is configured, do NOT falsely report success
   return {
-    success: true,
-    message: 'Recruitment application received in preview mode! Seed records will transition to live committee database upon activation.'
+    success: false,
+    isConfigured: false,
+    message: 'Recruitment portal backend is currently in unconfigured standby mode (Supabase credentials not configured in .env.local). Applications cannot be recorded yet. Please submit your application to ecell@mitaoe.ac.in.'
   };
 }

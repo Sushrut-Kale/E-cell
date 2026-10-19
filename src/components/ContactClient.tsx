@@ -29,7 +29,7 @@ export const ContactClient: React.FC = () => {
   });
 
   const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState<{ success: boolean; message: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ success: boolean; message: string; isConfigured?: boolean } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,17 +187,25 @@ export const ContactClient: React.FC = () => {
               className={`p-4 rounded-xl mb-6 text-sm flex items-start gap-3 ${
                 feedback.success
                   ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  : feedback.isConfigured === false
+                  ? 'bg-amber-50 text-amber-900 border border-amber-200'
                   : 'bg-rose-50 text-rose-800 border border-rose-200'
               }`}
             >
               {feedback.success ? (
-                <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-600" />
               ) : (
-                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${feedback.isConfigured === false ? 'text-amber-600' : 'text-rose-600'}`} />
               )}
               <div>
-                <p className="font-bold">{feedback.success ? 'Message Received' : 'Error'}</p>
-                <p className="mt-0.5">{feedback.message}</p>
+                <p className="font-bold">
+                  {feedback.success 
+                    ? 'Message Transmitted' 
+                    : feedback.isConfigured === false 
+                    ? 'Backend Connection Required' 
+                    : 'Dispatch Error'}
+                </p>
+                <p className="mt-0.5 leading-relaxed">{feedback.message}</p>
               </div>
             </div>
           )}
