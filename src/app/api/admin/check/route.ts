@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAdminSession } from '@/lib/server-auth';
 
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get('ecell_admin_token')?.value;
+  const isValid = verifyAdminSession(request);
 
-  if (!token || token.length < 16) {
+  if (!isValid) {
     return NextResponse.json({ authenticated: false }, { status: 401 });
   }
 
